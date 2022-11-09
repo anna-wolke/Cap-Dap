@@ -1,0 +1,12 @@
+During the months of October and November of 2022, I have been collecting copepod (Aglaodiaptomus leptopus) samples at a bog near Sevey's Point in St. Lawrence County, NY. After bringing them back to the lab, I photograph them under a 1x microscope and analyze their overall pigmentation color using Adobe Photoshop. Below are the variables included in my dataset, and a brief description of what they represent. 
+
+image_name - The name of the image saved in my files
+L - This is an output value taken from Photoshop which represents the luminosity of the color of the copepod. This scale is from dark to light, so higher values represent lighter values. 
+a - This is an output value taken from Photoshop which is a measure of the blue-yellow value of the color of the copepod. Negative values represent blue hues whereas positive values represent yellow hues.
+b - This is an output value taken from Photoshop which is a measure of the green-red value of the color of the copepod. Negative values represent green hues whereas positive values represent red hues.
+treatment - Copepods were introduced to various light treatments, which are the independent variables in my data. The different treatments are natural light (NL), darkness (D), and UV
+rep
+before_after - This variable contains binary data and determines if the data are from before or after the copepod specimens are exposed to their light treatments. "before" images of the copepods are taken 24 hours after the copepods are collected, once they have become acclimated in the lab. "after" images are taken 7 days after the copepods have been under their designated light treatments. 
+date_collected - The date the copepod samples were collected in the field. 
+trial_duration_days - The number of days the copepods have been under their light treatment
+date_photo - The date the copepods were photographed for color analysis

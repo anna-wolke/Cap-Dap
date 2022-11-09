@@ -1,0 +1,35 @@
+---
+title: "Cap-Dap"
+author: "Anna"
+date: "11/8/2022"
+output: html_document
+---
+
+Setting things up:
+```{r}
+rm(list=ls())
+library(here)
+library(tidyverse)
+library(ggfortify)
+```
+
+Importing the data:
+```{r}
+DF <- read.csv(here("Data", "biostats_copepod_data.csv"), stringsAsFactors = T)
+View(DF)
+glimpse(DF)
+```
+
+Looking at the data:
+```{r}
+ggplot(DF, aes(x = before_after, y = L)) +
+  geom_boxplot() +
+  xlab("Light treatment") +
+  ylab("Luminosity") +
+  theme_bw() +
+  facet_wrap()
+```
+
+
+
+
