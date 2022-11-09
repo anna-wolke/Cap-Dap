@@ -17,24 +17,21 @@ Importing the data:
 ```{r}
 DF <- read.csv(here("Data", "biostats_copepod_data.csv"), stringsAsFactors = T)
 View(DF)
-glimpse(DF)
 ```
 
 Looking at the data for luminosity:
 ```{r}
 ggplot(DF, aes(x = before_after, y = L)) +
-  geom_boxplot() +
-  xlab("Treatment") +
-  ylab("Luminosity") +
-  theme_bw() +
-  facet_wrap(~treatment)+
-  scale_x_discrete(limits = c("before", "after"))
+geom_boxplot() +
+xlab("Treatment") +
+ylab("Luminosity") +
+theme_bw() +
+facet_wrap(~treatment)+
+scale_x_discrete(limits = c("before", "after"))
 ```
-Running some sample stats for L:
 ```{r}
 t.test(L ~ before_after, data = DF)
 # this does not separate the different light treatments, but shows that for both natural light and darkness treatments, the pigmentation of the copepods fades during a 7-day period
 ```
-
 
 
