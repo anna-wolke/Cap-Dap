@@ -20,15 +20,17 @@ View(DF)
 glimpse(DF)
 ```
 
-Looking at the data:
+Looking at the data for luminosity:
 ```{r}
 ggplot(DF, aes(x = before_after, y = L)) +
   geom_boxplot() +
   xlab("Light treatment") +
   ylab("Luminosity") +
   theme_bw() +
-  facet_wrap()
+  facet_wrap(~treatment)+
+  scale_x_discrete(limits = c("before", "after"))
 ```
+
 
 
 
