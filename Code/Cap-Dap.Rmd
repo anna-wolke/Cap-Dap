@@ -5,6 +5,10 @@ date: "11/8/2022"
 output: html_document
 ---
 
+# Introduction
+I have been collecting zooplankton (Aglaodiaptomus leptopus) from a bog in Sevey’s Point and in the lab I anesthetize and photograph them under a microscope. I then import those photos into Photoshop and take an average of the total body color of each specimen. I record the color values L, a, and b (variables in my data sheet) which represent luminosity, the red vs. green scale, and the blue vs. yellow scale, respectively. After recording these initial values, I leave the zoopl. under different light treatments for 7 days and record how their pigment color changes over the course of the week. Under my “treatment” variable in my data you will see the values “D” and “NL” which represent darkness and natural light treatments, respectively. For my project, I would like to create statistical models showing if these three color elements of the zoopl. pigment change significantly over the course of the week, and if different light treatments produce significantly different results.
+
+# Preliminary steps
 Setting things up:
 ```{r}
 rm(list=ls())
@@ -15,23 +19,86 @@ library(ggfortify)
 
 Importing the data:
 ```{r}
-DF <- read.csv(here("Data", "biostats_copepod_data.csv"), stringsAsFactors = T)
+DF <- read.csv(here("Data", "biostats_copepod_data.csv"))
 View(DF)
 ```
+Before importing my data, I ensured that it was "tidy" by appropriately naming column headers without spaces or special characters. For the variables I am interested in working with, I organized the data so that there is only one variable per cell. 
 
-Looking at the data for luminosity:
+I need to convert treatment and before_after from character data to factor data:
+```{r}
+DF$treatment <- as.factor(DF$treatment)
+DF$before_after <- as.factor(DF$before_after)
+
+levels(DF$treatment)
+levels(DF$before_after)
+```
+
+
+# Analysis
+
+For looking at the data, I will be following this workflow:
+
+Plot > Guess relationships > Create model > Guess model assumptions > Run/interpret model > Replot to show key relationships
+
+## Looking at the data for luminosity:
 ```{r}
 ggplot(DF, aes(x = before_after, y = L)) +
 geom_boxplot() +
 xlab("Treatment") +
 ylab("Luminosity") +
 theme_bw() +
-facet_wrap(~treatment)+
+facet_wrap(~treatment) +
 scale_x_discrete(limits = c("before", "after"))
 ```
+Based on this plot, I make an assumption that luminosity increases significantly after the copepods have been in natural light and darkness treatments for 7 days. In other words, their pigment fades under these light treatments. 
+
+Now, let's create a stats model to take a closer look at the relationship:
 ```{r}
 t.test(L ~ before_after, data = DF)
 # this does not separate the different light treatments, but shows that for both natural light and darkness treatments, the pigmentation of the copepods fades during a 7-day period
 ```
+The p-value from this test is <0.05, so we reject the null hypothesis that there is no significant difference in the luminosity value between the before and after groups for natural light and darkness treatments. 
+
+## Looking at the a-value
+
+```{r}
+ggplot(DF, aes(x = before_after, y = a)) +
+geom_boxplot() +
+xlab("Treatment") +
+ylab("a") +
+theme_bw() +
+facet_wrap(~treatment)+
+scale_x_discrete(limits = c("before", "after"))
+```
+Testing significant difference between before and after data
+```{r}
+t.test(a ~ before_after, data = DF)
+```
+p-value <0.05 (sig diff)
+
+## Looking at the b-value
+
+```{r}
+ggplot(DF, aes(x = before_after, y = b)) +
+geom_boxplot() +
+xlab("Treatment") +
+ylab("b") +
+theme_bw() +
+facet_wrap(~treatment)+
+scale_x_discrete(limits = c("before", "after"))
+```
+And testing the sig diff for b
+```{r}
+t.test(b ~ before_after, data = DF)
+```
+p-value = 0.05384 (no sig diff)
+
+
+
+# Biological Summary
+
+
+# Challenges
+
 
 

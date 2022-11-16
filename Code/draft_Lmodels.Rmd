@@ -1,0 +1,134 @@
+---
+title: 'DRAFT: GLM Models'
+author: "Anna"
+date: "11/15/2022"
+output: html_document
+---
+
+Setting things up:
+```{r}
+rm(list=ls())
+library(here)
+library(tidyverse)
+library(ggfortify)
+```
+
+Data import:
+```{r}
+DF <- read.csv(here("Data", "biostats_copepod_data.csv"), stringsAsFactors = T)
+View(DF)
+```
+
+Model of luminosity (L)
+```{r}
+ggplot(DF, aes(x = before_after, y = L)) +
+geom_boxplot() +
+xlab("Treatment") +
+ylab("Luminosity") +
+theme_bw() +
+scale_x_discrete(limits = c("before", "after")) +
+facet_wrap(~treatment)
+```
+
+```{r}
+glm(L ~ treatment * before_after, data = DF, family = poisson)
+```
+I don't really understand what the output is telling me...
+
+
+Get means for before and after for NL and D treatments
+```{r}
+Lmean <- DF %>%
+  group_by(treatment, before_after) %>%
+  summarize(Lmean_pt = mean(L))
+```
+
+Model the means
+```{r}
+ggplot(Lmean, aes(x = before_after, y = Lmean_pt)) +
+  geom_point(shape = Lmean$treatment) +
+  geom_line(aes(group = treatment)) +
+  xlab("Treatment") +
+  ylab("Luminosity") +
+  theme_bw() +
+  scale_x_discrete(limits = c("before", "after"))
+```
+There is an interaction between the means of NL and D for the before and after measurements of luminosity
+
+The values of NL and D are not different, but their before and after results are. And the interaction between the two treatments is not significantly different (NL and D does not affect luminosity differently, they both fade at generally similar rates). 
+
+--- New attempt based on what we went over in class on 11/16/22:
+
+I want to try to do an ANOVA based on how we did it in class today...
+I have 2 categorical variables each with two levels, so I think I want to do a two-way ANOVA test. I am going to look at the 16Nov2022.Rmd notes that we quickly looked at to see if I can follow that. 
+
+Set things up:
+```{r}
+rm(list =ls())
+library(tidyverse)
+library(ggfortify)
+library(here)
+```
+
+Pull in data:
+```{r}
+DF <- read.csv(here("Data", "biostats_copepod_data.csv"))
+glimpse(DF)
+```
+
+I need to convert treatment and before_after data from character to factor
+```{r}
+DF$treatment <- as.factor(DF$treatment)
+DF$before_after <- as.factor(DF$before_after)
+
+levels(DF$treatment)
+levels(DF$before_after)
+```
+
+Since there are only 2 levels in each variable, I don't think I need to revel them. 
+
+As I was kind of doing before, I need to get the means to compare, so I have to use group by and summarize:
+```{r}
+sumDF <- DF %>%
+  group_by(treatment, before_after) %>%
+  summarize(meanL = mean(L))
+```
+
+Now, let's make an interaction plot
+```{r}
+ggplot(sumDF, aes(before_after, meanL, color = treatment, group = treatment)) +
+  geom_point() +
+  geom_line() +
+  theme_bw() +
+  scale_x_discrete(limits = c("before", "after")) +
+  xlab("Treatment") +
+  ylab("Mean luminosity (L)")
+```
+Based on this plot, it looks like there is an interaction present. The question I need to answer is `Does the effect of the before and after measurements on L depend on what kind of ligth treatment the copepods were exposed to?`
+
+I will make a model now to check assumptions. I need to use glm with poisson as the family because L is not on a continuous scale:
+```{r}
+model_L <- glm(L ~ treatment * before_after, data = DF, family = poisson)
+```
+
+Now to check assumptions:
+```{r}
+autoplot(model_L, smooth.color = NA)
+```
+Residuals and distribution look good. 
+
+Now I will look at the model
+```{r}
+anova(model_L)
+```
+
+...and look at the summary
+```{r}
+summary(model_L)
+```
+I think I need some help interpreting this output. What does the intercept represent here? The D (darkness) treatment and the after treatment combined?
+
+What I think it is saying is that there is significant difference between before and after luminosity results, but the light treatments themselves did not affect luminosity differently, even though the lines appear to cross each other on the interaction plot. 
+
+
+
