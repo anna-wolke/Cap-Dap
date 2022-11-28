@@ -24,6 +24,8 @@ View(DF)
 ```
 Before importing my data, I ensured that it was "tidy" by appropriately naming column headers without spaces or special characters. For the variables I am interested in working with, I organized the data so that there is only one variable per cell. 
 
+Please see the metadata in the "Data" folder of this project for explanation of the variables included in the data.
+
 I need to convert treatment and before_after from character data to factor data:
 ```{r}
 DF$treatment <- as.factor(DF$treatment)
@@ -32,7 +34,7 @@ DF$before_after <- as.factor(DF$before_after)
 levels(DF$treatment)
 levels(DF$before_after)
 ```
-
+Since there are only 2 levels in each variable, I don't need to revel them. 
 
 # Analysis
 
@@ -58,6 +60,50 @@ t.test(L ~ before_after, data = DF)
 # this does not separate the different light treatments, but shows that for both natural light and darkness treatments, the pigmentation of the copepods fades during a 7-day period
 ```
 The p-value from this test is <0.05, so we reject the null hypothesis that there is no significant difference in the luminosity value between the before and after groups for natural light and darkness treatments. 
+
+While this is helpful to see, I want to answer the question **Does the effect of the before and after measurements on L depend on what kind of light treatment the copepods were exposed to?** I will do that by running a generalized linear model.
+
+I need to use glm with poisson as the family because L is not on a continuous scale.
+```{r}
+model_L <- glm(L ~ treatment * before_after, data = DF, family = poisson)
+```
+
+Now to check assumptions:
+```{r}
+autoplot(model_L, smooth.color = NA)
+```
+Residuals and distribution look good, so we can move on to looking at the model. 
+
+Now I will look at the model
+```{r}
+anova(model_L)
+```
+
+...and look at the summary
+```{r}
+summary(model_L)
+```
+
+By looking at this output, I can see that there is significant difference between before and after luminosity results, but the light treatments themselves did not affect luminosity differently, even though the lines appear to cross each other on the interaction plot.
+
+First I need to get the means to compare, so I have to use group by and summarize:
+```{r}
+sumDF <- DF %>%
+  group_by(treatment, before_after) %>%
+  summarize(meanL = mean(L))
+```
+
+This is what that interaction plot looks like:
+```{r}
+ggplot(sumDF, aes(before_after, meanL, color = treatment, group = treatment)) +
+  geom_point() +
+  geom_line() +
+  theme_bw() +
+  scale_x_discrete(limits = c("before", "after")) +
+  xlab("Treatment") +
+  ylab("Mean luminosity (L)")
+```
+This plot shows the relationship that for both darkness (D) and natural light (NL) treatments, the mean luminosity value after the 7-day trial is significantly different than the initial luminosity value. In summary, both treatments caused the copepod pigmentation to fade and become more luminous. Despite the fact that the lines interact, this plot shows that the slopes of lines are not dramatically different, which is why I concluded that the different treatments themselves did not affect luminosity differently. 
 
 ## Looking at the a-value
 
@@ -92,6 +138,7 @@ And testing the sig diff for b
 t.test(b ~ before_after, data = DF)
 ```
 p-value = 0.05384 (no sig diff)
+
 
 
 

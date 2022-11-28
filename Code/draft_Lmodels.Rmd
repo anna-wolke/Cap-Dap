@@ -33,7 +33,6 @@ facet_wrap(~treatment)
 ```{r}
 glm(L ~ treatment * before_after, data = DF, family = poisson)
 ```
-I don't really understand what the output is telling me...
 
 
 Get means for before and after for NL and D treatments
@@ -104,7 +103,7 @@ ggplot(sumDF, aes(before_after, meanL, color = treatment, group = treatment)) +
   xlab("Treatment") +
   ylab("Mean luminosity (L)")
 ```
-Based on this plot, it looks like there is an interaction present. The question I need to answer is `Does the effect of the before and after measurements on L depend on what kind of ligth treatment the copepods were exposed to?`
+Based on this plot, it looks like there is an interaction present. The question I need to answer is `Does the effect of the before and after measurements on L depend on what kind of light treatment the copepods were exposed to?`
 
 I will make a model now to check assumptions. I need to use glm with poisson as the family because L is not on a continuous scale:
 ```{r}
