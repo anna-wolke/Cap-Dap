@@ -6,28 +6,28 @@ output: html_document
 ---
 
 # Introduction
-I have been collecting zooplankton (Aglaodiaptomus leptopus) from a bog in Sevey’s Point and in the lab I anesthetize and photograph them under a microscope. I then import those photos into Photoshop and take an average of the total body color of each specimen. I record the color values L, a, and b (variables in my data sheet) which represent luminosity, the red vs. green scale, and the blue vs. yellow scale, respectively. After recording these initial values, I leave the zoopl. under different light treatments for 7 days and record how their pigment color changes over the course of the week. Under my “treatment” variable in my data you will see the values “D” and “NL” which represent darkness and natural light treatments, respectively. For my project, I would like to create statistical models showing if these three color elements of the zoopl. pigment change significantly over the course of the week, and if different light treatments produce significantly different results.
+I have been collecting zooplankton (*Aglaodiaptomus leptopus*) from a bog in Sevey’s Point and in the lab I anesthetize and photograph them under a microscope. I then import those photos into Photoshop and take an average of the total body color of each specimen. I record the color values **L**, **a**, and **b** (variables in my data sheet) which represent luminosity, the red vs. green scale, and the blue vs. yellow scale, respectively. After recording these initial values, I leave the zoopl. under different light treatments for 7 days and record how their pigment color changes over the course of the week. Under my “treatment” variable in my data you will see the values `D` and `NL` which represent darkness and natural light treatments, respectively. For my project, I would like to create statistical models showing if these three color elements of the zoopl. pigment change significantly over the course of the week, and if different light treatments produce significantly different results.
 
 # Preliminary steps
+
 Setting things up:
-```{r}
+```{r, message = FALSE}
 rm(list=ls())
 library(here)
 library(tidyverse)
 library(ggfortify)
 ```
 
-Importing the data:
+Import the data
 ```{r}
 DF <- read.csv(here("Data", "biostats_copepod_data.csv"))
-View(DF)
 ```
 Before importing my data, I ensured that it was "tidy" by appropriately naming column headers without spaces or special characters. For the variables I am interested in working with, I organized the data so that there is only one variable per cell. 
 
-Please see the metadata in the "Data" folder of this project for explanation of the variables included in the data.
+Please see the metadata in the `Data` folder of this project for explanation of the variables included in the data.
 
 I need to convert treatment and before_after from character data to factor data:
-```{r}
+```{r, results = 'hide'}
 DF$treatment <- as.factor(DF$treatment)
 DF$before_after <- as.factor(DF$before_after)
 
@@ -42,7 +42,7 @@ For looking at the data, I will be following this workflow:
 
 `Plot > Guess relationships > Create model > Guess model assumptions > Run/interpret model > Replot to show key relationships`
 
-## Looking at the data for luminosity:
+#### Looking at the data for luminosity:
 ```{r}
 ggplot(DF, aes(x = before_after, y = L)) +
 geom_boxplot() +
@@ -57,8 +57,9 @@ Based on this plot, I make an assumption that luminosity increases significantly
 Now, let's create a stats model to take a closer look at the relationship:
 ```{r}
 t.test(L ~ before_after, data = DF)
-# this does not separate the different light treatments, but shows that for both natural light and darkness treatments, the pigmentation of the copepods fades during a 7-day period
 ```
+This does not separate the different light treatments, but shows that for both natural light and darkness treatments, the pigmentation of the copepods fades during a 7-day period.
+
 The p-value from this test is <0.05, so we reject the null hypothesis that there is no significant difference in the luminosity value between the before and after groups for natural light and darkness treatments. 
 
 While this is helpful to see, I want to answer the question **Does the effect of the before and after measurements on L depend on what kind of light treatment the copepods were exposed to?** I will do that by running a generalized linear model.
@@ -87,7 +88,7 @@ summary(model_L)
 By looking at this output, I can see that there is significant difference between before and after luminosity results, but the light treatments themselves did not affect luminosity differently. 
 
 First I need to get the means to compare, so I have to use group by and summarize:
-```{r}
+```{r, message = FALSE}
 sumDF_L <- DF %>%
   group_by(treatment, before_after) %>%
   summarize(meanL = mean(L))
@@ -105,7 +106,7 @@ ggplot(sumDF_L, aes(before_after, meanL, color = treatment, group = treatment)) 
 ```
 This plot shows the relationship that for both darkness (D) and natural light (NL) treatments, the mean luminosity value after the 7-day trial is significantly different than the initial luminosity value. In summary, both treatments caused the copepod pigmentation to fade and become more luminous. Despite the fact that the lines interact, this plot shows that the slopes of lines are not dramatically different, which is why I concluded that the different treatments themselves did not affect luminosity differently. 
 
-## Looking at the a-value
+#### Looking at the a-value
 
 As a quick recap, the a-value represents the red-green color scale when measuring color. The red pigment is significant for this study because the copepods typically present more red pigmentation in the Spring and Fall seasons. 
 
@@ -143,7 +144,7 @@ summary(model_a)
 This output shows that there is significant difference in the a-value before and after the copepods are exposed to the light treatments, but the light treatments themselves did not affect a-value differently. 
 
 To plot this finding, I will create an interaction plot. First, I find the means of the a values to compare...
-```{r}
+```{r, message = FALSE}
 sumDF_a <- DF %>%
   group_by(treatment, before_after) %>%
   summarize(mean_a = mean(a))
@@ -161,7 +162,7 @@ ggplot(sumDF_a, aes(before_after, mean_a, color = treatment, group = treatment))
 ```
 This plot shows that the lines for the two light treatments do not interact. It also shows that for both light treatments, the copepods lose a significant amount of their red pigment. 
 
-## Looking at the b-value
+#### Looking at the b-value
 
 Looking at the b-value for the copepod pigment is a very similar process as looking at the a-value. The b-value is the blue-yellow scale for color, so let's take a look at this data.
 
@@ -197,7 +198,7 @@ summary(model_b)
 I can see from this output that the p-values for both the before and after data as well as the interaction between the light treatments are all greater than 0.05, showing no significant difference for either of these comparisons. In summary, the b-value did not change significantly over the course of 7 days for either the natural light or darkness treatments. 
 
 I am going to plot these findings using a generalized linear model comparing the means
-```{r}
+```{r, message = FALSE}
 sumDF_b <- DF %>%
   group_by(treatment, before_after) %>%
   summarize(mean_b = mean(b))
@@ -213,11 +214,5 @@ ggplot(sumDF_b, aes(before_after, mean_b, color = treatment, group = treatment))
   ylab("Mean b-value")
 ```
 Although it appears that the lines interact, the mean b-values before and after the light treatment exposures were not significantly different, so therefore we cannot conclude that natural light and darkness treatments affected the b-value differently. 
-
-# Biological Summary
-
-
-# Challenges
-
 
 
