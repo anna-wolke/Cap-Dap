@@ -40,7 +40,7 @@ Since there are only 2 levels in each variable, I don't need to revel them.
 
 For looking at the data, I will be following this workflow:
 
-Plot > Guess relationships > Create model > Guess model assumptions > Run/interpret model > Replot to show key relationships
+`Plot > Guess relationships > Create model > Guess model assumptions > Run/interpret model > Replot to show key relationships`
 
 ## Looking at the data for luminosity:
 ```{r}
@@ -84,18 +84,18 @@ anova(model_L)
 summary(model_L)
 ```
 
-By looking at this output, I can see that there is significant difference between before and after luminosity results, but the light treatments themselves did not affect luminosity differently, even though the lines appear to cross each other on the interaction plot.
+By looking at this output, I can see that there is significant difference between before and after luminosity results, but the light treatments themselves did not affect luminosity differently. 
 
 First I need to get the means to compare, so I have to use group by and summarize:
 ```{r}
-sumDF <- DF %>%
+sumDF_L <- DF %>%
   group_by(treatment, before_after) %>%
   summarize(meanL = mean(L))
 ```
 
 This is what that interaction plot looks like:
 ```{r}
-ggplot(sumDF, aes(before_after, meanL, color = treatment, group = treatment)) +
+ggplot(sumDF_L, aes(before_after, meanL, color = treatment, group = treatment)) +
   geom_point() +
   geom_line() +
   theme_bw() +
@@ -107,6 +107,9 @@ This plot shows the relationship that for both darkness (D) and natural light (N
 
 ## Looking at the a-value
 
+As a quick recap, the a-value represents the red-green color scale when measuring color. The red pigment is significant for this study because the copepods typically present more red pigmentation in the Spring and Fall seasons. 
+
+Following the data workflow, I will first make a simple plot to look at the general trend of the data.
 ```{r}
 ggplot(DF, aes(x = before_after, y = a)) +
 geom_boxplot() +
@@ -116,14 +119,53 @@ theme_bw() +
 facet_wrap(~treatment)+
 scale_x_discrete(limits = c("before", "after"))
 ```
-Testing significant difference between before and after data
+Looking at this plot, it appears that in both the darkness and natural light treatments, the copepods lose red pigment over the course of the 7-day trial.
+
+To check this assumption, I will run a similar model to the test I ran for luminosity:
 ```{r}
-t.test(a ~ before_after, data = DF)
+model_a <- glm(a ~ treatment * before_after, data = DF, family = poisson)
 ```
-p-value <0.05 (sig diff)
+I am choosing the poisson distribution again because the a-scale is not continuous. 
+
+I will then check the assumptions I made for this test
+```{r}
+autoplot(model_a, smooth.color = NA)
+```
+The residuals look evenly distributed and the distribution follows a generally normal trend, so I can continue now to modelling the data
+
+```{r}
+anova(model_a)
+```
+... and looking at the summary stats
+```{r}
+summary(model_a)
+```
+This output shows that there is significant difference in the a-value before and after the copepods are exposed to the light treatments, but the light treatments themselves did not affect a-value differently. 
+
+To plot this finding, I will create an interaction plot. First, I find the means of the a values to compare...
+```{r}
+sumDF_a <- DF %>%
+  group_by(treatment, before_after) %>%
+  summarize(mean_a = mean(a))
+```
+
+... and then I can create the interaction plot.
+```{r}
+ggplot(sumDF_a, aes(before_after, mean_a, color = treatment, group = treatment)) +
+  geom_point() +
+  geom_line() +
+  theme_bw() +
+  scale_x_discrete(limits = c("before", "after")) +
+  xlab("Treatment") +
+  ylab("Mean a-value")
+```
+This plot shows that the lines for the two light treatments do not interact. It also shows that for both light treatments, the copepods lose a significant amount of their red pigment. 
 
 ## Looking at the b-value
 
+Looking at the b-value for the copepod pigment is a very similar process as looking at the a-value. The b-value is the blue-yellow scale for color, so let's take a look at this data.
+
+To begin, I will make a quick plot to visualize the data:
 ```{r}
 ggplot(DF, aes(x = before_after, y = b)) +
 geom_boxplot() +
@@ -133,14 +175,44 @@ theme_bw() +
 facet_wrap(~treatment)+
 scale_x_discrete(limits = c("before", "after"))
 ```
-And testing the sig diff for b
+Just by looking at these figures, it appears to me that the mean b-value for both light treatments does not change significantly after the 7-day trial period. But to be certain of this, I need to create a model of the data. 
+
+I'm going to run a generalized linear model to look at this.
 ```{r}
-t.test(b ~ before_after, data = DF)
+model_b <- glm(b ~ treatment * before_after, data = DF, family = gaussian)
 ```
-p-value = 0.05384 (no sig diff)
+I cannot use a poisson distribution for this model because it does not allow for negative values. 
+Now I need to check the assumptions of this model before running any tests:
+```{r}
+autoplot(model_b, smooth.color = NA)
+```
+The residuals and distribution confirm my assumptions, so I can move onto running the stats. 
 
+```{r}
+anova(model_b)
+```
+```{r}
+summary(model_b)
+```
+I can see from this output that the p-values for both the before and after data as well as the interaction between the light treatments are all greater than 0.05, showing no significant difference for either of these comparisons. In summary, the b-value did not change significantly over the course of 7 days for either the natural light or darkness treatments. 
 
+I am going to plot these findings using a generalized linear model comparing the means
+```{r}
+sumDF_b <- DF %>%
+  group_by(treatment, before_after) %>%
+  summarize(mean_b = mean(b))
+```
 
+```{r}
+ggplot(sumDF_b, aes(before_after, mean_b, color = treatment, group = treatment)) +
+  geom_point() +
+  geom_line() +
+  theme_bw() +
+  scale_x_discrete(limits = c("before", "after")) +
+  xlab("Treatment") +
+  ylab("Mean b-value")
+```
+Although it appears that the lines interact, the mean b-values before and after the light treatment exposures were not significantly different, so therefore we cannot conclude that natural light and darkness treatments affected the b-value differently. 
 
 # Biological Summary
 
