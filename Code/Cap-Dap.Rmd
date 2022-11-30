@@ -77,7 +77,7 @@ Residuals and distribution look good, so we can move on to looking at the model.
 
 Now I will look at the model
 ```{r}
-anova(model_L)
+anova(model_L, test = "Chisq")
 ```
 
 ...and look at the summary
@@ -124,7 +124,7 @@ Looking at this plot, it appears that in both the darkness and natural light tre
 
 To check this assumption, I will run a similar model to the test I ran for luminosity:
 ```{r}
-model_a <- glm(a ~ treatment * before_after, data = DF, family = poisson)
+model_a <- glm(a ~ treatment * before_after, data = DF, family = gaussian)
 ```
 I am choosing the poisson distribution again because the a-scale is not continuous. 
 
@@ -135,7 +135,7 @@ autoplot(model_a, smooth.color = NA)
 The residuals look evenly distributed and the distribution follows a generally normal trend, so I can continue now to modelling the data
 
 ```{r}
-anova(model_a)
+anova(model_a, test = "F")
 ```
 ... and looking at the summary stats
 ```{r}
@@ -190,7 +190,7 @@ autoplot(model_b, smooth.color = NA)
 The residuals and distribution confirm my assumptions, so I can move onto running the stats. 
 
 ```{r}
-anova(model_b)
+anova(model_b, test = "F")
 ```
 ```{r}
 summary(model_b)
