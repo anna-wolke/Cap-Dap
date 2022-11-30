@@ -6,7 +6,7 @@ output: html_document
 ---
 
 # Introduction
-I have been collecting zooplankton (*Aglaodiaptomus leptopus*) from a bog in Sevey’s Point and in the lab I anesthetize and photograph them under a microscope. I then import those photos into Photoshop and take an average of the total body color of each specimen. I record the color values **L**, **a**, and **b** (variables in my data sheet) which represent luminosity, the red vs. green scale, and the blue vs. yellow scale, respectively. After recording these initial values, I leave the zoopl. under different light treatments for 7 days and record how their pigment color changes over the course of the week. Under my “treatment” variable in my data you will see the values `D` and `NL` which represent darkness and natural light treatments, respectively. For my project, I would like to create statistical models showing if these three color elements of the zoopl. pigment change significantly over the course of the week, and if different light treatments produce significantly different results.
+Throughout the semester, I have been collecting copepods (*Aglaodiaptomus leptopus*) from a bog in Sevey’s Point and in the lab I anesthetize and photograph them under a microscope. I then import those photos into Photoshop and take an average of the total body color of each specimen. I record the color values **L**, **a**, and **b** (variables in my data sheet) which represent luminosity, the red vs. green scale, and the blue vs. yellow scale, respectively. After recording these initial values, I leave the zoopl. under different light treatments for 7 days and record how their pigment color changes over the course of the week. Under my “treatment” variable in my data you will see the values `D` and `NL` which represent darkness and natural light treatments, respectively. For my project, I would like to create statistical models showing if these three color elements of the zoopl. pigment change significantly over the course of the week, and if different light treatments produce significantly different results.
 
 # Preliminary steps
 
@@ -54,15 +54,7 @@ scale_x_discrete(limits = c("before", "after"))
 ```
 Based on this plot, I make an assumption that luminosity increases significantly after the copepods have been in natural light and darkness treatments for 7 days. In other words, their pigment fades under these light treatments. 
 
-Now, let's create a stats model to take a closer look at the relationship:
-```{r}
-t.test(L ~ before_after, data = DF)
-```
-This does not separate the different light treatments, but shows that for both natural light and darkness treatments, the pigmentation of the copepods fades during a 7-day period.
-
-The p-value from this test is <0.05, so we reject the null hypothesis that there is no significant difference in the luminosity value between the before and after groups for natural light and darkness treatments. 
-
-While this is helpful to see, I want to answer the question **Does the effect of the before and after measurements on L depend on what kind of light treatment the copepods were exposed to?** I will do that by running a generalized linear model.
+I want to answer the question **Does the effect of the before and after measurements on L depend on what kind of light treatment the copepods were exposed to?** I will do that by running a generalized linear model.
 
 I need to use glm with poisson as the family because L is not on a continuous scale.
 ```{r}

@@ -1,0 +1,46 @@
+---
+title: "Effects of UV light on pigment retention in Adirondack copepods (Aglaodiaptomus leptopus)"
+author: "Anna"
+date: "11/30/2022"
+output: html_document
+---
+
+## Introduction
+
+This semester I have been working in the Baldwin lab studying copepods (*A. leptopus*) from a bog in the northern Adirondacks near Sevey's Point, NY. Past research shows that throughout the year, the copepods in this bog experience a change in pigmentation color. In the Spring they display red pigment and the color shifts to blue during the Summer months before returning to a red color in the Fall. What I am interested in with my research is what is driving this pigment change and why. There are a few pre-cursors that are known to have effects on animal pigmentation which include diet, temperature changes, and UV light exposure, to name a few. One that we are all familiar with is the effect that UV radiation has on our own skin. In the summer when UV radiation is most intense, it is common for our skin to become more tan due to increased melanin production. This fact is well- researched in humans, but with my research I wanted to examine if UV was also the driver of pigment change in these copepods. 
+
+## Experimental Process
+
+After collecting my copepod specimens from the bog, I anesthetized and photographed them under a microscope. I then imported those photos into Photoshop and recorded an average of the total body color of each specimen. In Photoshop, a color contains three values: **L**, **a**, and **b** which represent luminosity, the red vs. green scale, and the blue vs. yellow scale, respectively. After recording these initial values, I leave the zoopl. under different light treatments for 7 days and record how their pigment changes over the course of the week. Initially in my 
+
+## Preliminary Steps
+
+Before diving into my research, I need to upload the necessary R packages, import my data, and tidy up my data so that it is ready for analysis.
+
+#### Setting things up
+
+Here, I am clearing R's brain so that I am starting with a clean slate before writing any code. I am also uploading the `tidyverse`, `ggfortify`, and `here` packages in anticipation of manipulating and modeling my data.
+```{r, message = FALSE}
+rm(list=ls())
+library(here)
+library(tidyverse)
+library(ggfortify)
+```
+
+#### Importing My Data
+
+Conveniently, as I started Biostats this semester I was also starting my  SYE project, so while I was collecting data for it, I was being conscious of how I set up my data in Excel. I used data validation to decrease my chances of having errors in my data, made sure to name my column headers without spaces or special characters, and entered only one variable per cell. 
+
+This is the data set I used:
+```{r}
+DF <- read.csv(here("Data", "cap_color_data_final.csv"))
+```
+
+Included in the `Data` folder of the project is a metadata document describing the significance of each of the variables in this data set.
+
+
+
+
+
+
+
