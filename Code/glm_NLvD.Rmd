@@ -20,17 +20,13 @@ library(ggfortify)
 
 Import the data
 ```{r}
-DF <- read.csv(here("Data", "biostats_copepod_data.csv"))
+DF <- read.csv(here("Data", "cap_color_data_final.csv"), stringsAsFactors = TRUE)
 ```
 Before importing my data, I ensured that it was "tidy" by appropriately naming column headers without spaces or special characters. For the variables I am interested in working with, I organized the data so that there is only one variable per cell. 
 
 Please see the metadata in the `Data` folder of this project for explanation of the variables included in the data.
 
-I need to convert treatment and before_after from character data to factor data:
-```{r, results = 'hide'}
-DF$treatment <- as.factor(DF$treatment)
-DF$before_after <- as.factor(DF$before_after)
-
+```{r}
 levels(DF$treatment)
 levels(DF$before_after)
 ```
@@ -43,8 +39,16 @@ For looking at the data, I will be following this workflow:
 `Plot > Guess relationships > Create model > Guess model assumptions > Run/interpret model > Replot to show key relationships`
 
 #### Looking at the data for luminosity:
+
+First, make a new data frame with only the desired variables:
 ```{r}
-ggplot(DF, aes(x = before_after, y = L)) +
+luminosity <- DF[, c("L", "a", "b", "treatment", "before_after", "date_collected")] %>%
+  filter(DF$date_collected == "10/14/22")
+```
+
+Plot
+```{r}
+ggplot(luminosity, aes(x = before_after, y = L)) +
 geom_boxplot() +
 xlab("Treatment") +
 ylab("Luminosity") +
@@ -58,7 +62,7 @@ I want to answer the question **Does the effect of the before and after measurem
 
 I need to use glm with poisson as the family because L is not on a continuous scale.
 ```{r}
-model_L <- glm(L ~ treatment * before_after, data = DF, family = poisson)
+model_L <- glm(L ~ treatment * before_after, data = luminosity, family = poisson)
 ```
 
 Now to check assumptions:
@@ -81,9 +85,12 @@ By looking at this output, I can see that there is significant difference betwee
 
 First I need to get the means to compare, so I have to use group by and summarize:
 ```{r, message = FALSE}
-sumDF_L <- DF %>%
+sumDF_L <- luminosity %>%
+  filter(date_collected == "10/14/22") %>%
   group_by(treatment, before_after) %>%
-  summarize(meanL = mean(L))
+  summarize(meanL = mean(L),
+            seL = sd(L)/sqrt(n())
+              )
 ```
 
 This is what that interaction plot looks like:
@@ -91,6 +98,8 @@ This is what that interaction plot looks like:
 ggplot(sumDF_L, aes(before_after, meanL, color = treatment, group = treatment)) +
   geom_point() +
   geom_line() +
+  geom_errorbar(aes(ymin = meanL - seL, 
+                    ymax = meanL + seL), width = 0.1) +
   theme_bw() +
   scale_x_discrete(limits = c("before", "after")) +
   xlab("Treatment") +
@@ -104,7 +113,7 @@ As a quick recap, the a-value represents the red-green color scale when measurin
 
 Following the data workflow, I will first make a simple plot to look at the general trend of the data.
 ```{r}
-ggplot(DF, aes(x = before_after, y = a)) +
+ggplot(luminosity, aes(x = before_after, y = a)) +
 geom_boxplot() +
 xlab("Treatment") +
 ylab("a") +
@@ -116,7 +125,7 @@ Looking at this plot, it appears that in both the darkness and natural light tre
 
 To check this assumption, I will run a similar model to the test I ran for luminosity:
 ```{r}
-model_a <- glm(a ~ treatment * before_after, data = DF, family = gaussian)
+model_a <- glm(a ~ treatment * before_after, data = luminosity, family = gaussian)
 ```
 I am choosing the poisson distribution again because the a-scale is not continuous. 
 
@@ -137,7 +146,7 @@ This output shows that there is significant difference in the a-value before and
 
 To plot this finding, I will create an interaction plot. First, I find the means of the a values to compare...
 ```{r, message = FALSE}
-sumDF_a <- DF %>%
+sumDF_a <- luminosity %>%
   group_by(treatment, before_after) %>%
   summarize(mean_a = mean(a))
 ```
@@ -160,7 +169,7 @@ Looking at the b-value for the copepod pigment is a very similar process as look
 
 To begin, I will make a quick plot to visualize the data:
 ```{r}
-ggplot(DF, aes(x = before_after, y = b)) +
+ggplot(luminosity, aes(x = before_after, y = b)) +
 geom_boxplot() +
 xlab("Treatment") +
 ylab("b") +
@@ -191,7 +200,7 @@ I can see from this output that the p-values for both the before and after data 
 
 I am going to plot these findings using a generalized linear model comparing the means
 ```{r, message = FALSE}
-sumDF_b <- DF %>%
+sumDF_b <- luminosity %>%
   group_by(treatment, before_after) %>%
   summarize(mean_b = mean(b))
 ```

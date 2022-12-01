@@ -70,7 +70,13 @@ NL and UV treatments did not experience a significant change in luminosity over 
 Let's make a nicer model:
 ```{r}
 ggplot(Nov3, aes(x = treatment, y = L, color = treatment)) +
-  geom_point() +
+  geom_point(size = 3, alpha = 0.3) +
+  stat_summary(
+    geom_point = "point",
+    fun.y = "mean",
+    shape = "diamond",
+    size = 2
+  ) +
   theme_bw() +
   xlab("Treatment") +
   ylab("Luminosity (L)") +

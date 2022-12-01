@@ -1,8 +1,9 @@
 ---
-title: "Effects of UV light on pigment retention in Adirondack copepods (Aglaodiaptomus leptopus)"
+title: Effects of UV light on pigment retention in Adirondack copepods (*Aglaodiaptomus* *leptopus*)
 author: "Anna"
 date: "11/30/2022"
-output: html_document
+output: html_document:
+  theme: sandstone
 ---
 
 ## Introduction
@@ -11,13 +12,13 @@ This semester I have been working in the Baldwin lab studying copepods (*A. lept
 
 ## Experimental Process
 
-After collecting my copepod specimens from the bog, I anesthetized and photographed them under a microscope. I then imported those photos into Photoshop and recorded an average of the total body color of each specimen. In Photoshop, a color contains three values: **L**, **a**, and **b** which represent luminosity, the red vs. green scale, and the blue vs. yellow scale, respectively. After recording these initial values, I leave the zoopl. under different light treatments for 7 days and record how their pigment changes over the course of the week. Initially in my 
+After collecting my copepod specimens from the bog, I anesthetized and photographed them under a microscope. I then imported those photos into Photoshop and recorded an average of the total body color of each specimen. In Photoshop, a color contains three values: **L**, **a**, and **b** which represent luminosity, the red vs. green scale, and the blue vs. yellow scale, respectively. After recording these initial values, I leave the zoopl. under different light treatments for 7 days and record how their pigment changes over the course of the week.
 
 ## Preliminary Steps
 
 Before diving into my research, I need to upload the necessary R packages, import my data, and tidy up my data so that it is ready for analysis.
 
-#### Setting things up
+### Setting things up
 
 Here, I am clearing R's brain so that I am starting with a clean slate before writing any code. I am also uploading the `tidyverse`, `ggfortify`, and `here` packages in anticipation of manipulating and modeling my data.
 ```{r, message = FALSE}
@@ -27,19 +28,31 @@ library(tidyverse)
 library(ggfortify)
 ```
 
-#### Importing My Data
+### Importing My Data
 
 Conveniently, as I started Biostats this semester I was also starting my  SYE project, so while I was collecting data for it, I was being conscious of how I set up my data in Excel. I used data validation to decrease my chances of having errors in my data, made sure to name my column headers without spaces or special characters, and entered only one variable per cell. 
 
 This is the data set I used:
 ```{r}
-DF <- read.csv(here("Data", "cap_color_data_final.csv"))
+DF <- read.csv(here("Data", "cap_color_data_final.csv"), stringsAsFactors = TRUE)
 ```
+I decided to use `stringsAsFactors = TRUE` because I want to convert the character strings into factors that can be easily grouped and filtered for analysis and data visualization.
 
-Included in the `Data` folder of the project is a metadata document describing the significance of each of the variables in this data set.
+Included in the `Data` folder of the project is a metadata document describing the significance of each of the variables in this data set. 
 
+It's a good idea to take a look at the variables within the data frame first to see what data I am working with and to double check that the character strings were successfully converted to factor variables. 
+```{r}
+str(DF)
+```
+## Analysis
 
+While analyzing my dating, I will be operating with the following workflow:
 
+`Plot > Guess relationships > Create model > Guess model assumptions > Run/interpret model > Replot to show key relationships`
+
+### Hypothesis 1: Pigmentation becomes more luminous after the specimens are in darkness and natural light treatments for 7 days
+
+When I first brought the animals into the lab, I noticed anecdotally that they appeared to fade within a few days of being removed from their natural bog habitat. This led me to hypothesize that if I were to place the animals under total darkness and a light treatment that contained little to no UV light, then I would be able to confirm if this were true or not. In a lab setting I was able to control for the other possible factors that could cause pigment change, such as diet and temperature. That way, I could feel confident that changes I saw in pigment color over time would be attributed to my light treatments. At this point in. my experimentation, I was using a fluorescent bulb as my "natural light" treatment to experiment with wavelengths in the visible light spectrum. **paper to cite?**
 
 
 
