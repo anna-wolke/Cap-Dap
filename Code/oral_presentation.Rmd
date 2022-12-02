@@ -1,7 +1,384 @@
 ---
-title: "Effects of UV light on pigment retention in Adirondack copepods (Aglaodiaptomus leptopus)"
-author: "Anna"
-date: "11/30/2022"
+title: Effects of UV light on pigment retention in Adirondack copepods
+author: "Anna Wolke"
+date: "2 Dec. 2022"
 output: html_document
 ---
+
+```{r, include = FALSE}
+rm(list=ls())
+library(here)
+library(tidyverse)
+library(ggfortify)
+```
+
+***
+
+## Introduction
+
+This semester I have been working in the Baldwin lab studying copepods (*Aglaodiaptomus leptopus*) from a bog in the northern Adirondacks near Sevey's Point, NY. Past research shows that throughout the year, the copepods in this bog experience a change in pigment color. In the Spring they display red pigment and the color shifts to blue during the Summer months before returning to a red color in the Fall. My research explores what the driving force may be behind this pigment change and why. There are a few pre-cursors that are known to have effects on animal pigmentation which include diet, temperature changes, and UV light exposure. One that we are all familiar with is the effect that UV radiation has on our own skin. In the summer when UV radiation is most intense, it is common for our skin to become more tan due to increased melanin production. This fact is well-researched in humans, but with my research I wanted to examine if UV was also the driver of pigment change in these copepods. 
+
+<br>
+
+```{r img-knitr, echo=FALSE, fig.align='center', out.width='60%', fig.cap= 'Fig 1. Copepods collected on 10/20/22 at Seveys Bog'}
+knitr::include_graphics(here("Images", "20Oct_fresh_i.bmp"))
+```
+
+<br>
+
+## Experimental Process
+
+After collecting my copepod specimens from the bog, I anesthetized and photographed them under a microscope. I then imported those photos into Photoshop and recorded an average of the total body color of each specimen. In Photoshop, a color contains three values: **L**, **a**, and **b** which represent **luminosity**, the **<span style="color: red;">red</span>** vs. **<span style="color: green;">green</span>** scale, and the **<span style="color: blue;">blue</span>** vs. **<span style="color: gold;">yellow</span>** scale, respectively. After recording these initial values, I leave the zoopl. under different light treatments for 7 days and record how their pigment changes over the course of the week.
+
+<br>
+
+## My Data
+
+```{r, include = FALSE}
+DF <- read.csv(here("Data", "cap_color_data_final.csv"))
+```
+
+```{r, echo = FALSE}
+str(DF)
+```
+<br>
+
+## Analysis
+
+Workflow:
+
+`Plot > Guess relationships > Create model > Guess model assumptions > Run/interpret model > Replot to show key relationships`
+
+
+
+***
+### Hypothesis 1: Pigmentation fades after 7 days in darkness and natural light treatments, and therefore the luminosity value significantly increases during this period. 
+
+When I first brought the animals into the lab, I noticed anecdotally that they appeared to fade within a few days of being removed from their natural bog habitat. This led me to hypothesize that if I were to place the animals under total darkness (D) and a light treatment (NL) that contained little to no UV light, then I would be able to compare their luminosity values before and after a 7-day trial period. I used a fluorescent bulb as my "natural light" treatment to experiment with wavelengths in the visible light spectrum.
+
+
+```{r img-with-knitr, echo=FALSE, fig.align='center', out.width='80%'}
+knitr::include_graphics(here("Images", "compare.png"))
+```
+
+##### Preliminary steps
+
+To examine the spread of data, I start by creating a data frame that includes the desired variables and converting character variables into factors. 
+
+```{r}
+luminosity <- DF[, c("L", "treatment", "before_after", "date_collected")] %>%
+  filter(DF$date_collected == "10/14/22")
+```
+
+```{r}
+luminosity$treatment <- as.factor(luminosity$treatment)
+luminosity$before_after <- as.factor(luminosity$before_after)
+luminosity$date_collected <- as.factor(luminosity$date_collected)
+```
+
+```{r, echo = FALSE}
+summary(luminosity)
+```
+
+Looking at the spread of luminosity (L) values, they are what I would expect. After working on color analysis all semester, I can confidently say that most L-values for my copepod images fall in the range of about 45 to 80. 
+
+<br>
+
+##### Plot
+
+A quick boxplot because displays the means and gives me a good idea about the variability within the treatments.
+
+
+```{r, echo = FALSE, fig.align='center'}
+ggplot(luminosity, aes(x = before_after, y = L)) +
+geom_boxplot() +
+xlab("Treatment") +
+ylab("Luminosity (L)") +
+theme_bw() +
+facet_wrap(~treatment) +
+scale_x_discrete(limits = c("before", "after"))
+```
+<br>
+##### Guess relationships
+
+- For the darkness treatment (D), average luminosty `before` is about 54 and `after` is about 63.
+
+- For the natural light treatment (NL), average luminosty `before` is about 55 and `after` is about 62.
+
+- Mean luminosity before and after seem to be significantly different
+
+- Luminosity (L) values for darkness (D) and natural light (NL) treatments look to be fairly similar both before and after the treatments were applied, so I hypothesize that the treatments did not have a significantly different effect on luminosity. 
+
+<br>
+##### Create model and guess assumptions
+
+To check if this is statistically true, I will make a statistical model. I am choosing to use a *generalized* linear model because L-values are integer valued and are bound on a scale from 0-100. Therefore, a *general* linear model would not be appropriate because normal distribution cannot be assumed. 
+
+```{r}
+model_L <- glm(L ~ treatment * before_after, data = luminosity, family = poisson)
+```
+
+A few important things to note about my glm... 
+
+1. I have made L a function of `treatment * before_after` to test the **interaction** between these two variables. Later on when I run the statistics, I will be able to see if the treatment affects the luminosity differently when comparing before and after values.
+
+2. I have decided to set the **family** equal to `poisson` because the L-scale on the y-axis is not continuous. As I mentioned before, the data are bounded by a scale, so the Poisson distribution accounts for this. 
+
+To ensure that the assumptions I am making about the distribution of my data are appropriate, I will use the autoplot function:
+
+```{r fig.align='center'}
+autoplot(model_L, smooth.color = NA)
+```
+
+The residuals appear to be evenly distributed and the data points follow a normal distribution according to the Q-Q plot, so I can confirm that my assumptions were okay and I can move on to running my model.
+
+<br>
+##### Run and interpret the statistical model
+
+```{r, message = FALSE}
+anova(model_L, test = "Chisq")
+```
+
+There are a few conclusions I can make based on this model:
+
+- The luminosity values between the D and NL treatments is not significantly different (p = 0.8711).
+
+- For both treatments, luminosity of the copepods increased significantly after 7 days (p < 0.05).
+
+- The light treatments did not affect the luminosity differently during the 7-day trial (p = 0.3755)
+
+<br>
+
+##### Replot to shows key relationships
+
+To visualize these findings and highlight the key relationships, I will create an interaction plot. The first step in this process is to create a separate data frame summarizing the mean values of luminosity for both treatments both before and after the 7-day period. Once I have those mean values isolated, I can use them to create the interaction plot.
+
+```{r, message = FALSE, echo = FALSE}
+sumDF_L <- luminosity %>%
+  filter(date_collected == "10/14/22") %>%
+  group_by(treatment, before_after) %>%
+  summarize(meanL = mean(L),
+            seL = sd(L)/sqrt(n())
+              )
+```
+
+
+```{r fig.align='center', echo = FALSE}
+ggplot(sumDF_L, aes(before_after, meanL, color = treatment, group = treatment)) +
+  geom_point() +
+  geom_line() +
+  geom_errorbar(aes(ymin = meanL - seL, 
+                    ymax = meanL + seL), width = 0.1) +
+  theme_bw() +
+  scale_x_discrete(limits = c("before", "after")) +
+  xlab("Treatment") +
+  ylab("Mean luminosity (L)")
+```
+
+Typically on an interaction plot, intercepting lines indicate that there is a significant interaction between two factors. For example, looking at this plot, it may appear that the darkness treatment causes the copepods to become more luminous over time than the natural light treatment, but as we confirmed with our statistical model, that is not the case. The overlapping of the error bars for the two treatments also indicates to us that the slopes of these lines could be variable and therefore we cannot say that one treatment significantly affects luminosity differently than the other. 
+
+
+
+
+
+
+
+
+
+***
+### Hypothesis 2: Copepods under UV light treatments retain their darker pigment over a 7-day period and therefore the `luminosity` does not change significantly. 
+
+On 11/3/22, I collected copepod samples at the bog and photographed them 24 hours later to allow them to acclimate to the temperature in the lab. I analyzed these "before" images and will be referring to the L, a, and b values from this group as the `control` treatment. I then placed the copepods into three treatment groups: darkness (`D`), natural light (`NL`), and UV light (`UV`). After 7 days, I photographed these individuals and analyzed their color in order to compare them to the control. 
+
+<br>
+##### Preliminary steps
+
+To start, I will make a data frame with the variables I want to look at (L, a, b, and treatment).
+
+```{r}
+Nov3 <- DF %>%
+  filter(date_collected == "11/3/22") %>%
+  select(L, a, b, treatment)
+```
+
+The "before" group is listed as "NA" for treatment, so I want to change that so it is listed as a "control" treatment. Then I want to convert the treatment variable into a factor
+```{r}
+Nov3$treatment <- Nov3$treatment %>%
+  replace_na("control")
+```
+
+```{r}
+Nov3$treatment <- as.factor(Nov3$treatment)
+```
+
+<br>
+##### Plot
+
+The next step is to make a quick plot to look at the general spread of data. A boxplot will show the means of each treatment in relation to each other. 
+```{r fig.align='center'}
+ggplot(Nov3, aes(x = treatment, y = L)) +
+geom_boxplot() +
+xlab("Treatment") +
+ylab("Luminosity") +
+theme_bw() 
+```
+<br>
+##### Guess relationships
+
+Based on my work from earlier in the season, I would guess that luminosity increases significantly for the `D` and `NL` treatments, but does not for the `UV` treatment. 
+
+##### Create model and guess assumptions
+
+Similar to the previous test I ran, I used a *generalized* linear model with the family `poisson` and check my assumptions by looking at the residuals and Q-Q plot. 
+
+```{r}
+model_L <- glm(L ~ treatment, data = Nov3, family = poisson)
+```
+```{r fig.align='center'}
+autoplot(model_L, smooth.color = NA)
+```
+
+
+All looks good, so I can move onto running my stats. 
+
+##### Run and interpret the statistical model
+
+Since there is one categorical variable (treatment) and one integer variable (L), I will run a simple one-way ANOVA test to compare the three light treatment groups against the control group.
+
+```{r}
+anova(model_L, test = "Chisq")
+```
+
+The low p-value indicates that between treatments, there is significant difference in luminosity. To identify where this significant difference lies, I can perform a Tukey test. 
+
+```{r}
+modelL_tukey <- aov(L ~ treatment, data = Nov3)
+TukeyHSD(modelL_tukey, conf.level=.95) 
+```
+
+The copepods in the NL and D treatments became significantly more luminous. The UV copepods stayed darker and did not fade significantly from the original color.
+
+<br>
+##### Replot to show key relationships
+
+```{r, echo = FALSE}
+mean_df_L <- Nov3 %>% 
+  group_by(treatment) %>%
+  summarise(mean_lum = mean(L))
+```
+
+```{r echo = FALSE}
+mean_control_L <- Nov3 %>%
+  filter(treatment == "control") %>%
+  summarise(mean = mean(L))
+```
+
+
+```{r fig.align='center'}
+ggplot(Nov3, aes(x = treatment, y = L, color = treatment)) +
+  geom_point(size = 3, alpha = 0.3) +
+  geom_point(data = mean_df_L, aes(x = treatment, y = mean_lum), shape = "diamond", size = 8, show.legend = FALSE) +
+  geom_hline(data = mean_control_L, aes(yintercept = mean), linetype = 2) +
+  theme_bw() +
+  xlab("Treatment") +
+  ylab("Luminosity (L)") +
+  coord_flip()
+```
+
+A scatterplot highlighting the mean L-values of each group effectively shows how the treatments differ compared to the mean.
+
+
+
+
+***
+### Hypothesis 3: Copepods under UV light treatments retain their darker pigment over a 7-day period and therefore the `a-value` for color does not decrease significantly for this treatment. 
+
+Another way of analyzing pigment is by looking at the a-value, which represents red-green scale where positive values represent red pigment and negative values represent green pigment. As I established earlier, the copepods fade significantly under darkness and visible light, but retain a darker shade under UV. In the Fall, the copepods at Sevey's Bog are typically a red color, so I believe that if they are fading under `D` and `NL` treatments, they will be losing this red pigment and therefore the a-value will decrease. On the other hand, if `UV` triggers a retention of pigment to protect the copepods from harmful UV radiation, I would not expect the a-value to decrease. 
+
+<br>
+##### Plot
+
+```{r fig.align='center'}
+ggplot(Nov3, aes(x = treatment, y = a)) +
+geom_boxplot() +
+xlab("Treatment") +
+ylab("a-value") +
+theme_bw() 
+```
+
+##### Create model and guess assumptions
+
+Like the previous model I made for lumnosity, I used a *generalized* linear model, but this time with the the family `gaussian` because unlike the luminosity scale, the a-scale contains negative values which does not work with the Poisson distribution I used previously. 
+
+```{r}
+model_a <- glm(a ~ treatment, data = Nov3, family = gaussian)
+```
+```{r fig.align='center'}
+autoplot(model_a, smooth.color = NA)
+```
+
+
+All looks good, so I can move onto running my stats. 
+
+<br>
+##### Run and interpret the statistical model
+
+```{r}
+anova(model_a, test = "F")
+```
+The low p-value for treatment indicates that there was a significant difference in the a-values compared to the control. 
+
+To find out exactly which treatments were different from one another, I am running another Tukey test. 
+
+```{r}
+model_a_tukey <- aov(a ~ treatment, data = Nov3)
+TukeyHSD(model_a_tukey, conf.level=.95) 
+```
+From this, I can see more clearly that the a-values for the darkness and natural light treatments change significantly over the 7-day period (p-values < 0.05), whereas the a value for the UV treatment does not change significantly (p = 0.357). 
+
+<br>
+##### Replot to show key relationships
+
+```{r, echo = FALSE}
+mean_df_a <- Nov3 %>% 
+  group_by(treatment) %>%
+  summarise(mean_a = mean(a))
+```
+
+```{r echo = FALSE}
+mean_control_a <- Nov3 %>%
+  filter(treatment == "control") %>%
+  summarise(mean = mean(a))
+```
+
+
+```{r, echo = FALSE, fig.align='center'}
+ggplot(Nov3, aes(x = treatment, y = a, color = treatment)) +
+  geom_point(size = 3, alpha = 0.3) +
+  geom_point(data = mean_df_a, aes(x = treatment, y = mean_a), shape = "diamond", size = 8, show.legend = FALSE) +
+  geom_hline(data = mean_control_a, aes(yintercept = mean), linetype = 2) +
+  theme_bw() +
+  xlab("Treatment") +
+  ylab("a-value") +
+  coord_flip()
+```
+
+### Biological Summary
+
+- Retention of dark pigments in copepods under UV implies that UV wavelengths stimulate photoprotection in these animals. 
+
+- Although UV light did not cause the copepods to fully transition back to a blue color, future work could experiment with greater intensity and/or longer exposure of UV light treatment to see if this dramatic color shift can be induced artificially.
+
+### Challenges and take-home messages
+
+- Generalized linear models are key when you have data that are not assumed to be normally distributed. 
+
+- To import a second image, I had to change the "img-knitr" in the second image to something different.
+
+- I still need to figure out how to put horizontal lines into my scatterplot.
+
+- At first, I was confused about the interaction plot because the lines can still intersect even if the interaction is not significant. 
+
+
+
 
