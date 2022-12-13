@@ -1,0 +1,66 @@
+---
+title: "Exploratory Data Analysis"
+author: "Anna"
+date: "12/12/2022"
+output: html_document
+---
+
+
+```{r, message = FALSE}
+rm(list=ls())
+library(here)
+library(tidyverse)
+library(ggfortify)
+```
+
+
+Conveniently, as I started Biostats this semester I was also starting my  SYE project, so while I was collecting data for it, I was being conscious of how I set up my data in Excel. I used data validation to decrease my chances of having errors in my data, made sure to name my column headers without spaces or special characters, and entered only one variable per cell. 
+
+```{r}
+DF <- read.csv(here("Data", "cap_color_data_final.csv"))
+```
+
+
+Filter out and select only the data I will be using
+```{r}
+DF2 <- DF %>%
+  filter(date_collected == "10/14/22" | date_collected == "11/3/22") %>%
+  select(L, a, b, treatment, before_after, date_collected)
+  
+```
+
+Make NA's in 11/3/22 data the control group
+```{r}
+DF2$treatment <- DF2$treatment %>%
+  replace_na("control")
+```
+
+Convert variables to factors
+```{r}
+DF2$treatment <- as.factor(DF2$treatment)
+DF2$date_collected <- as.factor(DF2$date_collected)
+DF2$before_after <- as.factor(DF2$before_after)
+```
+
+Make sure variables were converted successfully:
+```{r}
+str(DF2)
+```
+
+
+While I was collecting my data, I was using the term "natural light", or "NL", to refer to my visible light treatment. Later on, I decided that "visible light" was a better phrase to use for my purposes, so I want to edit all the "NL" treatments to "VL"
+```{r}
+DF2$treatment <- str_replace(DF2$treatment, "NL", "VL")
+```
+
+Make sure spread of data looks accurate
+```{r}
+summary(DF2)
+```
+Based on scale ranges and working with the L, a, and b values all semester, I feel confident that my data were correctly entered. 
+
+Now I want to save the editted DF2 data frame as a new .csv file
+```{r}
+write.csv(DF2, here("Data", "copepod_data_revised.csv"), row.names = FALSE)
+```
+

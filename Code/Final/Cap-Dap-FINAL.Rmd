@@ -1,0 +1,567 @@
+---
+title: Effects of UV light on pigment retention in Adirondack copepods (*Aglaodiaptomus *leptopus)
+author: "Anna"
+date: "11/30/2022"
+output: html_document
+---
+
+## Introduction
+
+### Scientific justification
+
+For many animals, change in body color is an inducible trait caused by a variety of environmental factors. Some birds change color based on their diet, such as flamingos expressing a pink color due to ingestion of dietary carotenoids (Fox, 1962). Pigment change in some lizard species is attributed to temperature change, such as the Kenyan chameleons that present a darker color to better absorb heat (Walton & Bennett, 1992). In humans, it is known that ultraviolet radiation induces a greater production of melanin, which darkens the skin and in turn, helps protect it from harmful UVR damage (Maddodi et al., 2012). 
+
+Past studies have shown that UVR can cause greater accumulation/production of pigmentation in small crustacean, and in turn that pigmentation protects them from UVR damage (Bashevkin et al., 2019; Hansson & Hylander, 2009; Brüsin et al., 2016). Copepods tend to contain high levels of carotenoid pigments, which act as a photoprotective compounds against UVR and are often red or yellow in color (Hansson 2009). Responses of pigmentation to UVR exposure has been identified in a variety of aquatic ecosystems such as low-latitude tropical high mountain lakes (Alcocer et al., 2020), high latitude fish-free ponds of Sweden (Brüsin et al., 2016), as well as high- and low-UVR exposed populations (Fernandez et al., 2020), but few studies like this have been conducted in temperate, fishless bogs. 
+
+This semester I have been working in the Baldwin lab studying copepods (*A. leptopus*) from a bog in the northern Adirondacks near Sevey's Point, NY. Past research shows that throughout the year, the copepods in this bog experience a change in pigment color; in the Spring they display red pigment, but turn blue during the Summer months before returning to a red color in the Fall (Baldwin, unpublished manuscript). The red pigmentation due to carotenoids is expected, but the driving force behind the transition to blue in unknown for the copepods in this bog. I hypothesize that UVR induces a production of blue pigment and in the absence of UV-rich light, the copepods will lose their photoprotective compounds. 
+
+
+```{r img-knitr, echo=FALSE, fig.align='center', out.width='60%', fig.cap= 'Fig 1. Copepods collected on 10/20/22 at Seveys Bog'}
+knitr::include_graphics(here("Images", "20Oct_fresh_i.bmp"))
+```
+
+Fig 1. Microscope photograph of *A. leptopus* specimens under 1.0x magnification.
+
+
+### Data 
+
+After collecting my copepod specimens from the bog, I anesthetized and photographed them under a microscope (Fig 1). I then imported those photos into Photoshop and recorded an average of the total body color of each specimen. In Photoshop, a color contains three values: **L**, **a**, and **b** which represent **luminosity**, the **<span style="color: red;">red</span>** vs. **<span style="color: green;">green</span>** scale, and the **<span style="color: blue;">blue</span>** vs. **<span style="color: gold;">yellow</span>** scale, respectively. After recording these initial values to obtain a baseline control color, I left the copepods under three different treatments for 7 days. The treatments were darkness, visible light, and UVB-rich light. After the 7-day period, these copepods were photographed using the same method as described for the control group, and L, a, and b values were collected.
+
+(Please see `metadata.txt` in the `Data` folder for further explanation of the variables). 
+
+### Hypotheses overview
+
+To observe how pigmentation of the copepods changed under various treatments, I tested the foloowing hypotheses:
+
+> Hypothesis 1: Pigmentation fades after 7 days in darkness and visible light treatments, and therefore the luminosity value significantly increases during this period. 
+
+Biological justification: If UVR causes the production of photoprotective compounds in zooplankton, then the absence of UV-rich wavelengths eliminates the need for these compounds to be produced. Both darkness and visible light treatments were tested initially to determine if presence vs. absence of any visible light causes a significant difference in pigment expression.
+
+> Hypothesis 2: Copepods under UV light treatments retain their darker pigment over a 7-day period and therefore the `luminosity` does not increase significantly. 
+
+Biological justification:
+
+> Hypothesis 3: Copepods under UV light treatments retain their darker pigment over a 7-day period and therefore the `a-value` does not decrease significantly. 
+
+Biological justification:
+
+> Hypothesis 4: Copepods under UV light treatments retain their darker pigment over a 7-day period and therefore the `b-value` does not decrease significantly. 
+
+Biological justification:
+
+## Analysis
+
+### Preliminary Steps
+
+Before diving into my research, I need to upload the necessary R packages, import my data, and tidy up my data so that it is ready for analysis.
+
+I then need to set things up for my code, so here I am clearing R's brain so that I am starting with a clean slate. I am also uploading the `tidyverse`, `ggfortify`, and `here` packages in anticipation of manipulating and modeling my data.
+
+```{r, message = FALSE}
+rm(list=ls())
+library(here)
+library(tidyverse)
+library(ggfortify)
+```
+
+I can then upload my raw data from the uploaded .csv file:
+
+```{r}
+DF <- read.csv(here("Data", "copepod_data_revised.csv"))
+```
+
+While analyzing my dating, I will be operating with the following workflow:
+
+`Plot > Guess relationships > Create model > Guess model assumptions > Run/interpret model > Replot to show key relationships`
+
+### Hypothesis 1: Pigmentation fades after 7 days in darkness and visible light treatments, and therefore the luminosity value significantly increases during this period. 
+
+When I first brought the animals into the lab, I noticed anecdotally that they appeared to fade within a few days of being removed from their natural bog habitat. This led me to hypothesize that if I were to place the animals under total darkness and a light treatment that contained little to no UV light, then I would be able to confirm if this were true or not. In a lab setting I was able to control for the other possible factors that could cause pigment change, such as diet and temperature. That way, I could feel confident that changes I saw in pigment color over time would be attributed to my light treatments. At this point in my experimentation, I was using a fluorescent bulb as my "visible light" treatment to experiment with wavelengths in the visible light spectrum.
+
+##### Create a data frame
+
+To test this, I will start by creating a data frame that includes the desired variables. As I drafted my experiment, the design changed week to week, which is why I am selecting only the data from samples collected on 10/14/22. For these data, I collected before and after images for both visible light (VL) and darkness (D) treatments. 
+
+```{r}
+luminosity <- DF %>%
+  filter(DF$date_collected == "10/14/22")
+```
+
+##### Plot
+
+To look at the data, I will create a quick boxplot because it will display the means and give me a good idea about the variability within the treatments.
+
+```{r fig.align='center'}
+ggplot(luminosity, aes(x = before_after, y = L)) +
+geom_boxplot() +
+xlab("Treatment") +
+ylab("Luminosity (L)") +
+theme_bw() +
+facet_wrap(~treatment) +
+scale_x_discrete(limits = c("before", "after"))
+```
+##### Guess relationships
+
+By looking at this plot, it seems that luminosity values for darkness (D) and visible light (VL) treatments were fairly similar. For D, the average luminosity of the copepod pigmentation before the experiment seems to be at about 54, and after they were in darkness for 7 days, the average L-value was at about 63. For VL, the L-value changed from about 55 to 62 under natural light. Based on these observations, I am guessing that for both D and VL treatments, luminosity changed significantly after 7 days, but the two treatments themselves did not effect luminosity differently. In other words, the pigment faded under both treatments, but one treatment did not cause the pigment to fade significantly more than the other. 
+
+##### Create model and guess assumptions
+
+To check if this is statistically true, I will make a statistical model. I am choosing to use a *generalized* linear model because L-values are integer valued and are bound on a scale from 0-100. Therefore, a *general* linear model would not be appropriate because normal distribution cannot be assumed. 
+
+```{r}
+model_L <- glm(L ~ treatment * before_after, data = luminosity, family = poisson)
+```
+
+A few important thinsg to note about my glm... 
+
+1. I have made L a function of `treatment * before_after` to test the interaction between these two variables. Later on when I run the statistics, I will be able to see if the treatment affects the luminosity differently when comparing before and after values.
+
+2. I have decided to set the family equal to `poisson` because the L-scale on the y-axis is not continuous. As I mentioned before, the data are bounded by a scale, so the Poisson distribution accounts for this. 
+
+To ensure that the assumptions I am making about the distribution of my data are appropriate, I will use the autoplot function:
+
+```{r}
+autoplot(model_L, smooth.color = NA)
+```
+
+The residuals appear to be evenly distributed and the data points follow a normal distribution according to the Q-Q plot, so I can confirm that my assumptions were okay and I can move on to running my model.
+
+##### Run and interpret model
+
+```{r, message = FALSE}
+anova(model_L, test = "Chisq")
+```
+There are a few conclusions I can make based on this model:
+
+- The luminosity values between the D and NL treatments is not significantly different (p = 0.8711).
+
+- For both treatments, luminosity of the copepods increased significantly after 7 days (p < 0.05).
+
+- The light treatments did not affect the luminosity differently during the 7-day trial (p = 0.3755)
+
+##### Replot to show key relationships
+
+To visualize these findings and highlight the key relationships, I will create an interaction plot. The first step in this process is to create a separate data frame summarizing the mean values of luminosity for both treatments both before and after the 7-day period. 
+
+```{r, message = FALSE}
+sumDF_L <- luminosity %>%
+  group_by(treatment, before_after) %>%
+  summarize(meanL = mean(L),
+            seL = sd(L)/sqrt(n())
+              )
+```
+
+Once I have those mean values isolated, I can use them to create the interaction plot:
+
+```{r fig.align='center'}
+ggplot(sumDF_L, aes(before_after, meanL, color = treatment, group = treatment)) +
+  geom_point() +
+  geom_line() +
+  geom_errorbar(aes(ymin = meanL - seL, 
+                    ymax = meanL + seL), width = 0.1) +
+  theme_bw() +
+  scale_x_discrete(limits = c("before", "after")) +
+  xlab("Treatment") +
+  ylab("Mean luminosity (L)")
+```
+
+Typically on an interaction plot, intercepting lines indicate that there is a significant interaction between two factors. For example, looking at this plot, it may appear that the darkness treatment causes the copepods to become more luminous over time than the natural light treatment, but as we confirmed with our statistical model, that is not the case. The overlapping of the error bars for the two treatments indicates that the slopes of these lines could be variable and therefore we cannot say that one treatment significantly affects luminosity differently than the other. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### Hypothesis 2: Copepods under UV light treatments retain their darker pigment over a 7-day period and therefore the `luminosity` does not increase significantly. 
+
+The `control` treatment in this analysis refers to the baseline color values collected when the copepods were first brought back from the bog. I then placed the copepods into three treatment groups: darkness (`D`), visible light (`VL`), and UV light (`UV`), and the L, a, and b values for these treatments were compared to that the `control`. 
+
+##### Create a new data frame
+
+First, I will create a data frame to pull my data from 11/3/22
+
+```{r}
+Nov3 <- DF %>%
+  filter(DF$date_collected == "11/3/22") %>%
+  select(L, a, b, treatment)
+```
+
+##### Plot
+
+The next step is to make a quick plot to look at the general spread of data. A boxplot will show the means of each treatment in relation to each other. 
+```{r fig.align='center'}
+ggplot(Nov3, aes(x = treatment, y = L)) +
+geom_boxplot() +
+xlab("Treatment") +
+ylab("Luminosity") +
+theme_bw() 
+```
+
+##### Guess relationships
+
+Based on this boxplot, it looks like the darkness (D), UVB-rich light (UV), and visible light (VL) treatments all became more luminous compared to the control group. That said, it is hard to tell by just looking at the plot. The UV luminosity mean looks like it is at about 59, compared to the control mean which looks to be about 57. Based on those means, it seems like the luminosity of the copepods from the UV treatment may not be significantly different than the control. If that is the case, it would indicate that pigments from the UV group were retained. On the other hand, the mean luminosty values for the darkness and visible light groups are about 63 and 61, respectively, which could be significantly greater than the control, indicating that pigment from this group was lost (faded over time). To check these relationships, we can run statistical models. 
+
+##### Create model and guess assumptions
+
+Similar to the previous test I ran for luminosity, I use a *generalized* linear model with the family `poisson` and check my assumptions by looking at the residuals and Q-Q plot. 
+
+```{r}
+model_L <- glm(L ~ treatment, data = Nov3, family = poisson)
+```
+```{r fig.align='center'}
+autoplot(model_L, smooth.color = NA)
+```
+
+The residuals and distribution seem appropriate, so I can move on to running the model. Since there is one categorical variable (treatment) and one integer variable (L), I will run a simple one-way ANOVA test to compare the three light treatment groups against the control group.
+
+##### Run and interpret model
+
+```{r}
+anova(model_L, test = "Chisq")
+```
+
+The low p-value indicates that between treatments, there is significant difference in luminosity. To identify where this significant difference lies, I can perform a Tukey test. 
+
+```{r}
+modelL_tukey <- aov(L ~ treatment, data = Nov3)
+TukeyHSD(modelL_tukey, conf.level=.95) 
+```
+
+The copepods in the visible light (VL) and darkness (D) treatments became significantly more luminous. The UV copepods stayed darker and did not fade significantly compared to the baseline color in the control group.
+
+
+##### Replot to show key relationships
+
+First I will make a data frame that shows the mean L-values for all treatments, which will be represented on the final plot as diamonds.
+```{r, echo = FALSE}
+mean_df_L <- Nov3 %>% 
+  group_by(treatment) %>%
+  summarise(mean_lum = mean(L))
+```
+
+Then, I will create a data frame just displaying the mean L-value for the control treatment so that I can create a dotted reference line on my plot to highlight this value and show how it differs from the means of the other treatment groups. 
+```{r echo = FALSE}
+mean_control_L <- Nov3 %>%
+  filter(treatment == "control") %>%
+  summarise(mean = mean(L))
+```
+
+
+```{r fig.align='center'}
+ggplot(Nov3, aes(x = treatment, y = L, color = treatment)) +
+  geom_point(size = 3, alpha = 0.3) +
+  geom_point(data = mean_df_L, aes(x = treatment, y = mean_lum), shape = "diamond", size = 8, show.legend = FALSE) +
+  geom_hline(data = mean_control_L, aes(yintercept = mean), linetype = 2) +
+  theme_bw() +
+  xlab("Treatment") +
+  ylab("Luminosity (L)") +
+  coord_flip()
+```
+
+This plot highlights the mean L-values of each treatment (diamonds) and effectively shows how the treatments differ compared to the mean of the control (dotted line). The plot clearly shows the the mean luminosity values for darkness (D) and visible light (VL) treatments are significantly different from the control, but the luminosity of the UV group did not change significantly. In other words, the UV light treatment caused the copepods to retain their darker pigmentation, but the absence of UV light wavelengths caused these pigments to fade. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### Hypothesis 3: Copepods under UV light treatments retain their darker pigment over a 7-day period and therefore the `a-value` does not decrease significantly. 
+
+Another way of analyzing pigment is by looking at the a-value, which represents red-green scale where positive values represent red pigment and negative values represent green pigment. As previously determined, the copepods fade significantly under darkness and visible light, but retain a darker shade under UV. In the Fall, the copepods at Sevey's Bog are typically a red color, which indicates the presence of carotenoid pigments. These red pigments are also known to protect the copepods from UV, so I would predict that darkness and visible light treatments would cause copepods to lose this pigment, whereas individuals under the UV-rich light would retain carotenoid pigmentation.
+
+##### Data frame
+
+For analysis of the a-value, I will use the same data frame (`Nov3`) as the previous test, which includes L, a, and b data for copepods collected on 11/3/22.
+
+##### Plot
+
+Again, I will use a boxplot to show a comparison of the means and the general spread of the data.
+
+```{r fig.align='center'}
+ggplot(Nov3, aes(x = treatment, y = a)) +
+geom_boxplot() +
+xlab("Treatment") +
+ylab("a-value") +
+theme_bw() 
+```
+
+##### Guess relationships
+
+The mean of the control appears to be at about 8.5. All mean a-values for the treatment groups appear to be less than the control, but not by much. If I were to make a guess based on this plot I would think that the means of the darkness and visible light treatments, both at about 6, are significantly different from the control. The mean a-value for the UV group looks to be about 8, so it may not be significantly different than the control. This guess would align with my original hypothesis that copepods in the UV group retain their red pigment whereas the copepods in treatments lacking UV would lose these pigments. 
+
+
+##### Create model and guess assumptions
+
+Like the previous model I made for luminosity, I used a *generalized* linear model, but this time with the the family `gaussian` because unlike the luminosity scale, the a-scale contains negative values and therefore the Poisson distribution I used previously would not be appropriate.
+
+
+```{r}
+model_a <- glm(a ~ treatment, data = Nov3, family = gaussian)
+```
+```{r fig.align='center'}
+autoplot(model_a, smooth.color = NA)
+```
+
+The assumptions here look good, so I can continue to run my model.
+
+##### Run and interpret model
+
+To compare the a-value for the three treatment groups compared to the mean, I will run a one-way ANOVA. 
+
+```{r}
+anova(model_a, test = "F")
+```
+
+The low p-value for treatment indicates that there was a significant difference in the a-values compared to the control. To find out exactly which treatments were different from one another, I am running another Tukey test. 
+
+```{r}
+model_a_tukey <- aov(a ~ treatment, data = Nov3)
+TukeyHSD(model_a_tukey, conf.level=.95) 
+```
+
+From this, I can see more clearly that the a-values for the darkness(D) and visible light (VL) treatments change significantly over the 7-day period (p-values < 0.05), whereas the a-value for the UV treatment does not change significantly (p = 0.357). This aligns with my previous conjecture about the relationships shown in my boxplot, but I want to make a better plot to show these relationships.
+
+##### Replot to show key relationships
+
+Similar to the plot I made for the luminosity values, I will first isolate the mean a-values so that I can refer to them on my plot. 
+
+```{r, echo = FALSE}
+mean_df_a <- Nov3 %>% 
+  group_by(treatment) %>%
+  summarise(mean_a = mean(a))
+```
+
+```{r echo = FALSE}
+mean_control_a <- Nov3 %>%
+  filter(treatment == "control") %>%
+  summarise(mean = mean(a))
+```
+
+
+```{r, echo = FALSE, fig.align='center'}
+ggplot(Nov3, aes(x = treatment, y = a, color = treatment)) +
+  geom_point(size = 3, alpha = 0.3) +
+  geom_point(data = mean_df_a, aes(x = treatment, y = mean_a), shape = "diamond", size = 8, show.legend = FALSE) +
+  geom_hline(data = mean_control_a, aes(yintercept = mean), linetype = 2) +
+  theme_bw() +
+  xlab("Treatment") +
+  ylab("a-value") +
+  coord_flip()
+```
+
+This plot highlights the mean a-values of each treatment (diamonds) and effectively shows how the treatments differ compared to the mean of the control (dotted line). The plot clearly shows the the mean a-values for darkness (D) and visible light (VL) treatments have significantly decreased compared to the control. The a-value of the UV group did not change significantly. In other words, the UV light treatment caused the copepods to retain their red pigmentation, but the absence of UV light wavelengths caused these pigments to fade. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### Hypothesis 4: Copepods under UV light treatments retain their darker pigment over a 7-day period and therefore the `b-value` does not decrease significantly. 
+
+The steps for this analysis will look very similar to the procedure I used to look at the changes in a-value above. The difference with the b-value is that it represents blue-yellow scale where positive values represent yellow pigment and negative values represent blue pigment. There are a few things to consider about this scale before getting started. One is that carotenoids are often a yellow color, and since the Fall specimens I worked with are naturally red-orange this time of year, it is expected that yellow pigments will be present in the control sample. While these yellow pigments are significant, I wanted to see if I could expose the copepods to enough UV that they would turn blue, therefore "reversing" them back to their blue Summer color and consequently obtaining negative b-values for the UV treatment group. 
+
+##### Data frame
+
+Similar to my analysis of a-values, I will use the `Nov3` data frame, which contains L, a, and b values for the four aforementioned treatments (control, D, VL, UV) using copepods collected on 11/3/22.
+
+##### Plot
+
+I will use a boxplot again to show to a comparison of means and spread of the data. 
+
+```{r fig.align='center'}
+ggplot(Nov3, aes(x = treatment, y = b)) +
+geom_boxplot() +
+xlab("Treatment") +
+ylab("b-value") +
+theme_bw() 
+```
+##### Guess relationships
+
+It appears that the mean b-values for the control, darkness, and UV treatments are all around 3, so there is probably to no significant difference here. Surprisingly, the visible light treatment appears to have a slightly lower b-value than the other treatments, but I will not know if that is statistically true until I run my models. One other thing I can see from this plot is that none of the b-value means are iin the negative range, so I am guessing that my UV treatment did not cause the copepods to gain blue pigment as I had hoped. 
+
+##### Create model and guess assumptions
+
+Similar to what I did for analyzing the a-value, I used a *generalized* linear model with a `gaussian` distribution. 
+
+```{r}
+model_b <- glm(b ~ treatment, data = Nov3, family = gaussian)
+```
+```{r fig.align='center'}
+autoplot(model_b, smooth.color = NA)
+```
+
+The assumptions here look okay... There is some abnormalities on the outer ranges of the Q-Q plot, but it is not dramatic enough to be entirely concerned. 
+
+##### Run and interpret model
+
+To compare the b-value for the three treatment groups compared to the mean, I will run a one-way ANOVA again. 
+
+```{r}
+anova(model_b, test = "F")
+```
+
+The low p-value is < 0.05, indicating that there is a significant difference in the b-values of the treatment groups compared to the control. To find out exactly where this difference lies, I am running a Tukey test. 
+
+```{r}
+model_b_tukey <- aov(b ~ treatment, data = Nov3)
+TukeyHSD(model_b_tukey, conf.level=.95) 
+```
+The Tukey test reveals that the b-value for the visible light treatment (VL) decreased significantly compared to the control group (p = 0.014), and compared to the UV light treatment (p = 0.012). The b-value for the darkness treatment is not significantly different than the control (p = 0.353). The b-value for the UV treatment did not change significantly compared to the control (p = 0.726) and it did not reach the negative value range. 
+
+##### Replot to show key relationships
+
+
+Similar to the plot I made for the luminosity values, I will first isolate the mean a-values so that I can refer to them on my plot. 
+
+```{r, echo = FALSE}
+mean_df_b <- Nov3 %>% 
+  group_by(treatment) %>%
+  summarise(mean_b = mean(b))
+```
+
+```{r echo = FALSE}
+mean_control_b <- Nov3 %>%
+  filter(treatment == "control") %>%
+  summarise(mean = mean(b))
+```
+
+
+```{r, echo = FALSE, fig.align='center'}
+ggplot(Nov3, aes(x = treatment, y = b, color = treatment)) +
+  geom_point(size = 3, alpha = 0.3) +
+  geom_point(data = mean_df_b, aes(x = treatment, y = mean_b), shape = "diamond", size = 8, show.legend = FALSE) +
+  geom_hline(data = mean_control_b, aes(yintercept = mean), linetype = 2) +
+  theme_bw() +
+  xlab("Treatment") +
+  ylab("b-value") +
+  coord_flip()
+```
+
+This plot highlights the mean b-values of each treatment (diamonds) and shows how the treatments differ compared to the mean of the control group (dotted line). The plot shows that the mean b-value for the visible light (VL) treatment is significantly less than the control. The b-values for the darkness and UV treatments did not change significantly comapred to the control. In other words, the only treatment that experienced a significant change in b-value was VL. The decrease in b-value for this group from a positive number to a less positive number implies a loss of yellow pigmentation. Because none of the b-value means reached a negative value, it can be assumed that none of the copepods in any treatment gained blue pigment.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Biological Summary
+
+Let's recap the findings from this project, with a focus on the copepods under the UVB-rich light treatment:
+
+1. While copepods left in darkness and visible light treatments fade over the course of 7 days, copepods left under UVB-rich light retained their dark pigmentation and therefore did not become more luminous over time. 
+
+2. To further support the claim above, copepods in darkness and visible light treatments lost red pigment over time, while those in UVB-rich light retained it. Red pigmentation in copepods is typically attributed to carotenoids, so this finding supports the idea that carotenoids help protect copepods from UV radiation. 
+
+3. Copepods in a visible light treatment experienced a decrease in b-value, indicating a loss of yellow pigment that could also be possible carotenoid pigments. It is interesting that the copepods did not significantly lose yellow pigments as well, but it is possible that there is another factor contributing to this result that is beyond the scope of this study. 
+
+4. Copepods under the UVB-rich light did not gain blue pigment as originally expected. The mean b-value for this group did not reach a negative value, meaning there were no blue pigments present at all after the 7-day trial. While this was an unexpected result, it is possible that longer exposure or a higher intensity of UV radiation is needed for copepods to produce the blue pigment. Further research is needed in this area. 
+
+In summary, pigmentation of copepods is retained under UVB-rich light, but fades when placed in kept in darkness and visible light that lacks UV light wavelengths. The duration, intensity, and/or spectrum of light I used for my UV treatment did not successfully cause red copepods collected in the Fall to transition to a blue color similar to those copepods found naturally in the Summer.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Challenges and take-home messages
+
+Reflecting back on this project, there are a few challenges and take-home messages I want to remember for when I work with my own data in the future in R:
+
+- When working with data that includes a categorical predictor variable with a bounded integer scale as the response variable, use a **generalized linear model**! For a proportional or percent scale (such as that for the L-value on a 0-100 scale), use the Poisson distribution. When negative values are present, use the Gaussian distribution. 
+
+- On an interaction plot, it is possible that the lines will intercept even if there is no significant interaction between the variables in question. Be careful to look at the p-value of the interaction when running the ANOVA to determine this. Error bars can further emphasize how SE in the data can cause this to happen. 
+
+- Some of the challenges I had with this project were with the formatting of the html file. For example, one finnicky detail I spent a lot of time trying to fix was getting a second image to appear. Using Stack Exchange, I was able to discover that I had to change the "img-knitr" in the code for my second image to something different in order for R to accept that it was a different image. 
+
+- Saving a new .csv file with my revised data made my life a lot easier, thanks to the `write.csv()` function. It was way quicker to have a condensed version of my raw data with only the variables I was interested in. 
+
+
+
+
+
+
+
+
+## References
+<br> 
+
+Alcocer, J., Delgado, C. N., & Sommaruga, R. (2020). Photoprotective compounds in zooplankton of two adjacent tropical high mountain lakes with contrasting underwater light climate and fish 
+occurrence. Journal of Plankton Research, 42(2), 105-118.
+<br>
+
+Bashevkin, S. M., Christy, J. H., & Morgan, S. G. (2019). Photoprotective benefits of pigmentation in the transparent plankton community: a comparative species experimental test. Ecology, 100(5), e02680.
+<br>
+
+Brüsin, M., Svensson, P. A., & Hylander, S. (2016). Individual changes in zooplankton pigmentation in relation to ultraviolet radiation and predator cues. Limnology and Oceanography, 61(4), 1337-1344.
+<br>
+
+Fernández, C. E., Campero, M., Bianco, G., Ekvall, M. T., Rejas, D., Uvo, C. B., & Hansson, L. A. (2020). Local adaptation to UV radiation in zooplankton: a behavioral and physiological 
+approach. Ecosphere, 11(4), e03081.
+<br>
+
+Fox, D. L. (1962). Metabolic fractionation, storage and display of carotenoid pigments by flamingoes. Comparative Biochemistry and Physiology, 6(1), 1-40.
+<br>
+
+Hansson, L. A., & Hylander, S. (2009). Effects of ultraviolet radiation on pigmentation, photoenzymatic repair, behavior, and community ecology of zooplankton. Photochemical & Photobiological Sciences, 8(9), 1266-1275.
+<br>
+
+Maddodi, N., Jayanthy, A., & Setaluri, V. (2012). Shining light on skin pigmentation: the darker and the brighter side of effects of UV radiation. Photochemistry and photobiology, 88(5), 1075-1082.
+<br>
+
+Walton, B. M., & Bennett, A. F. (1993). Temperature-dependent color change in Kenyan chameleons. Physiological Zoology, 66(2), 270-287.
+
+
+

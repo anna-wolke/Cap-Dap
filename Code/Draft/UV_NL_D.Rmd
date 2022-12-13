@@ -1,0 +1,127 @@
+---
+title: "NL vs. D vs. UV"
+author: "Anna"
+date: "11/30/2022"
+output: html_document
+---
+
+First, set things up:
+```{r}
+rm(list=ls())
+library(here)
+library(tidyverse)
+library(ggfortify)
+```
+
+The data have been updated to include new dates and UV data:
+```{r}
+DF <- read.csv(here("Data", "cap_color_data_final.csv"))
+```
+
+I want to observe my data to make sure all variables are included and there isn't anything funky going on
+```{r}
+str(DF)
+```
+
+Now I want to make a new data frame to grab just the variables I am interested in 
+```{r}
+Nov3 <- DF %>%
+  filter(date_collected == "11/3/22") %>%
+  select(L, a, b, treatment)
+```
+
+The "before" group is listed as "NA" for treatment, so I want to change that 
+```{r}
+Nov3$treatment <- Nov3$treatment %>%
+  replace_na("control")
+```
+
+```{r}
+Nov3$treatment <- as.factor(Nov3$treatment)
+```
+
+
+Let's look at the structure of this new data frame now
+```{r}
+str(Nov3)
+```
+Let's do a quick plot to look at the general spread of data
+```{r}
+ggplot(Nov3, aes(x = treatment, y = L)) +
+geom_boxplot() +
+xlab("Treatment") +
+ylab("Luminosity") +
+theme_bw() 
+```
+
+```{r}
+model_L <- glm(L ~ treatment, data = Nov3, family = poisson)
+autoplot(model_L, smooth.color = NA)
+```
+
+```{r}
+anova(model_L, test = "Chisq")
+```
+
+Somewhere in these treatments, there is significant difference in luminosity between treatments
+
+```{r}
+mean_df <- Nov3 |> 
+  group_by(treatment) |>
+  summarise(mean_lum = mean(L))
+```
+
+```{r}
+mean_control <- Nov3 |>
+  filter(treatment == "control") |>
+  summarise(mean = mean(L))
+```
+
+
+```{r}
+ggplot(Nov3, aes(x = treatment, y = L, color = treatment)) +
+  geom_point(size = 3, alpha = 0.3) +
+  geom_point(data = mean_df, aes(x = treatment, y = mean_lum), shape = "diamond", size = 7, show.legend = FALSE) +
+  geom_hline(data = mean_control, aes(yintercept = mean), linetype = 2) +
+  theme_bw() +
+  xlab("Treatment") +
+  ylab("Luminosity (L)") +
+  coord_flip()
+```
+
+Perform a Tukey test to see where the significant difference lies
+```{r}
+modelL_tukey <- aov(L ~ treatment, data = Nov3)
+TukeyHSD(modelL_tukey, conf.level=.95) 
+```
+The copepods in the NL and D treatments became significantly more luminous. The UV copepods stayed darker and did not fade significantly from the original color.
+
+Now, to look at the b-value
+```{r}
+ggplot(Nov3, aes(x = treatment, y = b)) +
+geom_boxplot() +
+xlab("Treatment") +
+ylab("b-value") +
+theme_bw() 
+```
+There does not seem to be any significant difference based on this plot, but let's run the stats
+```{r}
+model_b_tukey <- aov(b ~ treatment, data = Nov3)
+TukeyHSD(model_b_tukey, conf.level=.95) 
+```
+b-values never reach into the negative values, meaning the copepods are not gaining any blue pigment in any treatments. 
+
+Now to look at the a-value:
+```{r}
+ggplot(Nov3, aes(x = treatment, y = a)) +
+geom_boxplot() +
+xlab("Treatment") +
+ylab("a-value") +
+theme_bw() 
+```
+And a Tukey test...
+```{r}
+model_a_tukey <- aov(a ~ treatment, data = Nov3)
+TukeyHSD(model_a_tukey, conf.level=.95) 
+```
+
