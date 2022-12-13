@@ -5,6 +5,9 @@ date: "11/30/2022"
 output: html_document
 ---
 
+*Not using this for this project, but interesting to see and explore a different area of my data. 
+
+
 Setting things up:
 ```{r, message = FALSE}
 rm(list=ls())

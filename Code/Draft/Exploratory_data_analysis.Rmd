@@ -5,7 +5,6 @@ date: "12/12/2022"
 output: html_document
 ---
 
-
 ```{r, message = FALSE}
 rm(list=ls())
 library(here)
@@ -13,15 +12,30 @@ library(tidyverse)
 library(ggfortify)
 ```
 
-
-Conveniently, as I started Biostats this semester I was also starting my  SYE project, so while I was collecting data for it, I was being conscious of how I set up my data in Excel. I used data validation to decrease my chances of having errors in my data, made sure to name my column headers without spaces or special characters, and entered only one variable per cell. 
+I started Biostats this semester as I was starting my  SYE project, so while I was collecting data for my project, I was being conscious of how I set up my data in Excel. I used data validation to decrease my chances of having errors in my data, made sure to name my column headers without spaces or special characters, and entered only one variable per cell. 
 
 ```{r}
 DF <- read.csv(here("Data", "cap_color_data_final.csv"))
 ```
 
+Looking at the data 
+```{r}
+str(DF)
+```
 
-Filter out and select only the data I will be using
+In my data, I have a lot of "character" data. For example, the treatment type is categorical nominal and the collection date is categorical ordinal (although, in my study dates will not be compared against each other, so order is not important in this specific case). The "before_after" variable is categorical binary because there are only two possible answers. 
+
+I also have integer data bounded on a scale, which make variables such as L* a* and b* quantitative and discrete. L* is on a 0-100 scale and a* and b* are both on scales that are technically continuous, but typically don't fall outside the range of -100 to 100. In fact, let's look at the summary of the data frame to confirm this. 
+
+```{r}
+summary(DF)
+```
+
+Looking at my integer data for L* a* and b* values, L* values are in the range of 44-80 and average to about 61.13. The a* values range from 0-44 and average at about 6.822. This looks funny to me, because a value of 44 is very high for a* and is probably an error in data entry. b* values are in the range of -9 to 12, and average to 2.79. For all specimens I collected this semester across all treatment groups, I see that the b* value does contain values in the negative range, but the a* value does not. This indicates there is never green pigment present in the copepods. Overall, other than the unusually high value of 44 for a*, this summary of the data shows what I would have expected. After working with the Lab color scale all semester, I can confidently say that the mean values are wat I would have expected.
+
+Now that I have looked at my raw data set, I want to make a revised version of it to use in my final analysis. I will not be using all the variables, so I am going to cleanup the data and make a new and revised .csv file.
+
+First, I'll filter out and select only the data I will be using
 ```{r}
 DF2 <- DF %>%
   filter(date_collected == "10/14/22" | date_collected == "11/3/22") %>%
@@ -29,13 +43,13 @@ DF2 <- DF %>%
   
 ```
 
-Make NA's in 11/3/22 data the control group
+For the "before" color values for my last experimental trial, I listed the treatment group as NA, but in reality I want that to be the control treatment that I compared the experimental groups to. So, I will make NA's in 11/3/22 data the control group.
 ```{r}
 DF2$treatment <- DF2$treatment %>%
   replace_na("control")
 ```
 
-Convert variables to factors
+Some of the variables I want as factors, so I will use as.factor() to convert those strings into recognizeable and distinct factors. Later on, this will be useful when I want to group data together to compare treatments or focus only on specimens from a certain date.
 ```{r}
 DF2$treatment <- as.factor(DF2$treatment)
 DF2$date_collected <- as.factor(DF2$date_collected)
@@ -46,7 +60,7 @@ Make sure variables were converted successfully:
 ```{r}
 str(DF2)
 ```
-
+Those variables are now each shown as a "Factor w/ x levels"
 
 While I was collecting my data, I was using the term "natural light", or "NL", to refer to my visible light treatment. Later on, I decided that "visible light" was a better phrase to use for my purposes, so I want to edit all the "NL" treatments to "VL"
 ```{r}
@@ -57,10 +71,40 @@ Make sure spread of data looks accurate
 ```{r}
 summary(DF2)
 ```
-Based on scale ranges and working with the L, a, and b values all semester, I feel confident that my data were correctly entered. 
+Based on scale ranges and working with the L, a, and b values all semester, I feel confident that my data were correctly entered. The weird a* value of 44 that I saw previously was recorded on a date that I am not using in my final data, so I do not need to go in and change it for this project.
+
+Let's take a quick look at the L, a, b values before continuing:
+
+For L...
+```{r}
+ggplot(DF2, aes(x = L)) +
+geom_histogram() +
+xlab("Luminosity (L)") +
+theme_bw() 
+```
+
+For a...
+```{r}
+ggplot(DF2, aes(x = a)) +
+geom_histogram() +
+xlab("a-value") +
+theme_bw() 
+```
+
+For b...
+```{r}
+ggplot(DF2, aes(x = b)) +
+geom_histogram() +
+xlab("b-value") +
+theme_bw() 
+```
+
+From these histograms, I can see the spread of the data for each variable better and confirm the ranges and central tendencies I established above. With this new data frame, I see that the 44 outlier in the a-value is gone because it was filtered out. 
+
 
 Now I want to save the editted DF2 data frame as a new .csv file
 ```{r}
 write.csv(DF2, here("Data", "copepod_data_revised.csv"), row.names = FALSE)
 ```
 
+When I produce my final plots and analysis, I will pull in this revised .csv as my data frame.
